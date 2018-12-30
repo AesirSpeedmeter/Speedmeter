@@ -1,0 +1,19 @@
+{
+  "product": "Aesir SpeedMeter",
+  "version": "1",
+  "setup": {
+    "Refresh": "60",
+    "Autostart": 0
+  },
+  "menu_items": [
+    "Measure Now! = do_measure",
+    "Options = open_options"
+  ],
+  "check_items": [
+    "Check Updates! = check_updates"
+  ],
+  "misc_items": [
+    "About = open_about",
+    "Quit = quit"
+  ]
+}

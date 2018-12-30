@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.4 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkAboutDialog" id="aboutWindow">
+    <property name="can_focus">False</property>
+    <property name="opacity">0.90000000000000002</property>
+    <property name="title" translatable="yes">About Speedmeter</property>
+    <property name="window_position">center-always</property>
+    <property name="type_hint">dialog</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="program_name">SpeedMeter</property>
+    <property name="version">V.1.0</property>
+    <property name="copyright" translatable="yes">All rights reserved.</property>
+    <property name="comments" translatable="yes">Aesir simple speedtest notifier </property>
+    <property name="website">www.embedded-tips.com</property>
+    <property name="website_label" translatable="yes">www.embedded-tips.com</property>
+    <property name="authors">murat demirtas&lt;muratdemirtastr@gmail.com&gt;</property>
+    <property name="logo">icons/active.png</property>
+    <property name="license_type">gpl-3-0</property>
+    <signal name="activate-link" handler="openURL" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+  </object>
+</interface>
