@@ -1,6 +1,7 @@
 {
   "product": "Aesir SpeedMeter",
   "version": "1",
+  "update_link": "",
   "setup": {
     "Refresh": "60",
     "Autostart": 0

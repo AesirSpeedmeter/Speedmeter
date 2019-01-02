@@ -1,17 +1,76 @@
 #!/usr/bin/env python3
+import atexit
 import json
 import os
 import signal
 import time
+import webbrowser
 from threading import Thread
-
 import gi
 import netifaces
 import speedtest
+import xlsxwriter
+import time
 
-import webbrowser
+class AesirExcelWriter:
+    def __init__(self, file_name, reserve_row):
+        self.current_row_index = 0
+        self.current_column_index = 0
+        self.file_name = file_name
+        if reserve_row is not None:
+            self.reserverow(reserve_row)
+        self.workbook = xlsxwriter.Workbook(self.file_name)
+        self.worksheet = self.workbook.add_worksheet()
+        self.worksheet.fit_width
+
+    def createTitle(self, list):
+        row = 0
+        col = 0
+        for item in list:
+            self.worksheet.write(row,
+                                 col, item)
+            col += 1
+
+    def reserverow(self, how_many):
+        self.current_row_index += how_many
+
+    def writefromdict(self, dict):
+        pass
+
+    def closeFile(self):
+        self.workbook.close()
+
+    def writefromlist(self, list):
+
+        for item in list:
+            self.worksheet.write(self.current_row_index,
+                                 self.current_column_index, item)
+            self.current_column_index += 1
+
+        self.current_row_index += 1
+        self.current_column_index = 0
+
+class HandlerOptionsWindow:
+
+    def switch_updates_event_activate(self, widget):
+        pass
+
+    def switch_boot_event_activate(self, widget):
+        pass
+
+    def switch_save_event_activate(self, widget):
+        pass
+
+    def switch_updates_event_set(self, widget):
+        pass
+
+    def switch_boot_event_set(self, widget):
+        pass
+
+    def switch_save_event_set(self, widget):
+        pass
+
 class Handler:
-
 
     def openURL(self, instance, url):
         webbrowser.open('http://embedded-tips.com')  # Go to example.com
@@ -22,7 +81,7 @@ class Handler:
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('AppIndicator3', '0.1')
-from gi.repository import Gtk, AppIndicator3, GObject
+from gi.repository import Gtk, AppIndicator3, GObject, Gdk
 
 try:
     json_data = open(os.path.dirname(os.path.abspath(__file__)) + '/conf.json').read()
@@ -96,6 +155,19 @@ class Indicator():
             self.indicator.set_label(" Internet Ok!", self.applicationtitle)
         self.measurement_result = []
         self.animation_counter_old = 0
+
+        list2 = []
+        list2.append("download")
+        list2.append("upload")
+        list2.append("ping")
+        list2.append("sponsor")
+        list2.append("timestamp")
+        list2.append("ip")
+        file_name = time.strftime("result_%d_%m_%Y_%H:%M.xlsx")
+        self.excelhandler = AesirExcelWriter(file_name, 1)
+        self.excelhandler.createTitle(list2)
+
+
         self.time_counter = 59
         self.total_animation_index = 0
         self.animation_index = 0
@@ -103,8 +175,24 @@ class Indicator():
         self.update.setDaemon(True)
         self.update.start()
 
-    def open_options(self):
-        pass
+
+
+
+        atexit.register(self.exithandler)
+
+        self.current_ip_address = None
+        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+
+    def exithandler(self):
+        print('My application is ending!')
+        self.excelhandler.closeFile()
+
+    def open_options(self, widget):
+        builder = Gtk.Builder()
+        builder.add_from_file("options.glade")
+        builder.connect_signals(HandlerOptionsWindow())
+        window = builder.get_object("optionWindow")
+        window.show_all()
 
     def check_updates(self, widget):
         pass
@@ -116,25 +204,32 @@ class Indicator():
         except Exception as e:
             print(e)
 
-
-
-
-
-
     def open_about(self, widget):
-        window = Gtk.Window()
-        builder = Gtk.Builder()
 
+        builder = Gtk.Builder()
         builder.add_from_file("about.glade")
         builder.connect_signals(Handler())
         window = builder.get_object("aboutWindow")
         window.show_all()
-    @staticmethod
-    def quit(widget):
+
+
+    def quit(self, widget):
+        self.exithandler()
         os._exit(0)
+
+    def onmiddleclickevent(self, widget):
+        if len(self.measurement_result) > 1:
+            self.clipboard.set_text(self.current_ip_address, -1)
+            self.notifysystem("Aesir Speedmeter", "Your IP: " +
+                              str(self.current_ip_address) + " was copied to clipboard!")
 
     def create_menu(self):
         menu = Gtk.Menu()
+        activator_item = Gtk.MenuItem()
+        activator_item.set_visible(False)
+        activator_item.connect("activate", self.onmiddleclickevent)
+        menu.append(activator_item)
+        self.indicator.set_secondary_activate_target(activator_item)
         for item in CONF_FILE_INSTANCE["menu_items"]:
             keys = item.split(" = ")
             menu_item = Gtk.MenuItem(keys[0])
@@ -161,15 +256,17 @@ class Indicator():
             return None
 
 
-    @staticmethod
-    def getcurrentspeed():
+    def getcurrentspeed(self):
         try:
             servers = []
             st_service = speedtest.Speedtest()
             st_service.get_servers(servers)
             st_service.get_best_server()
+            self.setindicatorlabeltext("Download Test!")
             st_service.download()
+            self.setindicatorlabeltext("Upload Test!")
             st_service.upload()
+            self.setindicatorlabeltext("Finished Test!")
             results = st_service.results.dict()
             st_service = None
             servers = None
@@ -197,8 +294,7 @@ class Indicator():
             self.animation_index = self.animation_index + 1
 
         else:
-
-            if self.animation_index > self.total_animation_index :
+            if self.animation_index > self.total_animation_index:
                 self.animation_index = 0
 
             GObject.idle_add(
@@ -224,6 +320,7 @@ class Indicator():
                     resultdata['server']['sponsor'] + " (" + resultdata['server']['cc'] + ")"
         self.measurement_result.append(ping_data)
         self.total_animation_index = self.total_animation_index + 1
+        self.current_ip_address = resultdata['client']['ip']
         ip_data = " IP: " + str(resultdata['client']['ip']) + " (" + str(resultdata['client']['country']) + ")"
         self.measurement_result.append(ip_data)
         self.total_animation_index = self.total_animation_index + 1
@@ -231,13 +328,15 @@ class Indicator():
         isp_vendor = " " + str(resultdata['client']['isp'])
         self.measurement_result.append(isp_vendor)
         self.total_animation_index = self.total_animation_index + 1
+
         if tx_count and rx_count is not None:
             self.total_animation_index = self.total_animation_index + 1
             bandwith_usage = " Total: ⬇: " + str(round(rx_count / 1048576000, 2)) + " GB " + "⬆: " \
-                         + str(round(tx_count / 1048576000, 2)) + " GB "
+                             + str(round(tx_count / 1048576000, 2)) + " GB "
             self.measurement_result.append(bandwith_usage)
 
     def main_thread_func(self):
+
         while True:
             self.time_counter = self.time_counter + 1
             time.sleep(1)
@@ -251,7 +350,19 @@ class Indicator():
                 self.setindicatorlabeltext(" Calculating!")
                 results_dict = self.getcurrentspeed()
                 if results_dict is not None:
-                    print(results_dict)
+
+                    x = json.dumps(results_dict, ensure_ascii=False)
+                    x = json.loads(x)
+                    list = []
+
+
+                    list.append(x["download"])
+                    list.append(x["upload"])
+                    list.append(x["ping"])
+                    list.append(x["server"]["sponsor"])
+                    list.append(x["timestamp"])
+                    list.append(x["client"]["ip"])
+                    self.excelhandler.writefromlist(list)
                     self.parseresultdata(results_dict)
 
 
